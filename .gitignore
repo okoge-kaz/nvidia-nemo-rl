@@ -48,5 +48,5 @@ code_snapshots*/
 !default_runtime_env.yaml
 
 # ABCI environment
-
-
+outputs/
+hostfile/
