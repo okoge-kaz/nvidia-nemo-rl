@@ -66,13 +66,13 @@ policy:
     kwargs:
       lr: 5.0e-6
       weight_decay: 0.1
-      betas: [0.9, 0.98]
+      betas: [0.9, 0.95]
       eps: 1e-5
       # when using Dtensor, we need to set foreach
       # and fused to False
       foreach: False
       fused: False
-    
+
   ## ignored since enabled=false, but needed for testing purposes
   megatron_cfg:
     enabled: false
