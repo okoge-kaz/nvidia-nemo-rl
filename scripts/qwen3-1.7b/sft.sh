@@ -1,7 +1,7 @@
 #!/bin/sh
 #PBS -q rt_HF
 #PBS -N qwen3-1.7b-sft
-#PBS -l select=1
+#PBS -l select=2
 #PBS -l walltime=24:00:00
 #PBS -j oe
 #PBS -m n
@@ -57,8 +57,8 @@ TRAIN_ITERATION=2500
 SEQ_LENGTH=8192
 
 # Checkpoint Settings
-CHECKPOINT_DIR=
-CHECKPOINT_SAVE_DIR="/groups/gch51639/fujii/checkpoints/nemo-rl/Llama-3.2-1B/LR_${LR}_MIN_LR_${MIN_LR}/"
+CHECKPOINT_SAVE_DIR="/groups/gch51639/fujii/checkpoints/nemo-rl/Llama-3.2-1B/NODE_${NUM_NODES}/LR_${LR}_MIN_LR_${MIN_LR}/"
+mkdir -p $CHECKPOINT_SAVE_DIR
 
 # Ray Setup
 mapfile -t NODES < <(sort -u "$PBS_NODEFILE")
@@ -103,8 +103,9 @@ export CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7"
 uv run ./examples/run_sft.py \
   --config examples/configs/sft.yaml \
   cluster.num_nodes=${NUM_NODES} \
-  cluster.gpus_per_node=${NUM_GPUS} \
+  cluster.gpus_per_node=${NUM_GPU_PER_NODE} \
   checkpointing.checkpoint_dir=${CHECKPOINT_SAVE_DIR} \
+  checkpointing.save_period=500 \
   policy.optimizer.kwargs.eps=1.0E-8 \
   policy.optimizer.kwargs.lr=${LR} \
   policy.dtensor_cfg.context_parallel_size=${CONTEXT_PARALLEL_SIZE} \
@@ -116,9 +117,10 @@ uv run ./examples/run_sft.py \
   sft.val_global_batch_size=${GLOBAL_BATCH_SIZE} \
   sft.val_micro_batch_size=${MICRO_BACH_SIZE} \
   sft.max_num_steps=${TRAIN_ITERATION} \
+  logger.log_dir=${CHECKPOINT_SAVE_DIR}/logs \
   logger.wandb_enabled=True \
   logger.wandb.project="nemo-rl" \
-  logger.wandb.name="sft-llama8b"
+  logger.wandb.name="Llama-3.2-1B-LR_${LR}_MIN_LR_${MIN_LR}"
 
 # Clean
 ray stop
