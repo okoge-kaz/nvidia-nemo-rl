@@ -92,6 +92,8 @@ mcore = [
     # It is specified here since we don't directly use Megatron-Bridge/pyproject.toml, but a proxy setup.py+pyproject.toml combo
     # outside to allow "optionally" installing the megatron path. It's simpler to deal with transformer-engine here in the NeMo RL pyproject.toml
     "transformer-engine[pytorch]==2.8.0",
+    "transformer-engine-torch==2.8.0",
+    "transformer-engine-cu12==2.8.0",
     "megatron-core",
     "megatron-bridge",
     # Remove this once https://github.com/NVIDIA-NeMo/RL/issues/501 resolved
@@ -167,6 +169,9 @@ triton = [
 ]
 causal-conv1d = { git = "https://github.com/Dao-AILab/causal-conv1d", tag = "v1.5.0.post8" }
 mamba-ssm = { git = "https://github.com/state-spaces/mamba.git", rev = "2e16fc3062cdcd4ebef27a9aa4442676e1c7edf4" }
+transformer-engine = { index = "nvidia" }
+transformer-engine-torch = { index = "nvidia" }
+transformer-engine-cu12 = { index = "nvidia" }
 
 [tool.uv.workspace]
 members = [
@@ -184,6 +189,11 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu129"
 url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
 explicit = true
 
 [tool.uv]
