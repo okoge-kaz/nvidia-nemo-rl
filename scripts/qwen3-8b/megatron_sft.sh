@@ -96,21 +96,10 @@ PORT=6379
 echo "Head Node: $HEAD_NODE ($HEAD_IP)"
 echo "Worker Nodes: ${WORKER_NODES[*]}"
 
-# for DEBUG
 export NCCL_DEBUG="INFO"
-# 2. PyTorch Distributed / Gloo (制御通信)
-# ここは bond0 を使います
 export GLOO_SOCKET_IFNAME=$CONTROL_IFNAME
-
-# 3. NCCL (GPU間通信 - データ転送)
-# 重要: "^ibn" という正規表現を使って、ibn1～ibn8 すべてを使わせます。
-# これにより 8つのレールを束ねて最大帯域を出します。
-# export NCCL_SOCKET_IFNAME="^ibn"
 export NCCL_SOCKET_IFNAME="bond0"
-export NCCL_IB_HCA="^mlx5_ibn"  # -x で渡すの忘れずに
-export NCCL_CROSS_NIC=1
-export NCCL_ALGO=RING
-export NCCL_DEBUG=INFO
+export NCCL_IB_HCA="^mlx5_ibn"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 export CACHE_ROOT="/groups/gch51639/fujii/cache"
@@ -148,8 +137,6 @@ mpirun -np ${#NODES[@]} \
   -x NCCL_SOCKET_IFNAME \
   -x GLOO_SOCKET_IFNAME \
   -x NCCL_IB_HCA \
-  -x NCCL_CROSS_NIC \
-  -x NCCL_ALGO \
   -x NCCL_DEBUG \
   bash -c "$WORKER_CMD" &
 
@@ -185,7 +172,7 @@ uv run python examples/run_sft.py \
   policy.megatron_cfg.optimizer.adam_beta2=0.95 \
   policy.megatron_cfg.optimizer.adam_eps=1E-8 \
   policy.megatron_cfg.optimizer.use_precision_aware_optimizer=false \
-  policy.megatron_cfg.scheduler.lr_decay_style="" \
+  policy.megatron_cfg.scheduler.lr_decay_style="cosine" \
   policy.megatron_cfg.scheduler.lr_decay_iters=${TRAIN_ITERATION} \
   policy.megatron_cfg.scheduler.lr_warmup_iters=${WARMUP_ITERATION} \
   policy.megatron_cfg.distributed_data_parallel_config.grad_reduce_in_fp32=true \
