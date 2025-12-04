@@ -77,6 +77,8 @@ class DistillationConfig(TypedDict):
     max_rollout_turns: int  # for multi-turn rollouts. Math Environments just have 1 turn (answering the question)
     max_num_steps: int  # maximum number of steps to train for
     max_num_epochs: int  # maximum number of epochs to train for
+    max_num_steps: int  # maximum number of steps to train for
+    max_num_epochs: int  # maximum number of epochs to train for
     val_batch_size: int
     val_period: int
     val_at_start: bool

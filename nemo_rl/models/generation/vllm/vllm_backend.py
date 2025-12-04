@@ -16,13 +16,20 @@ from typing import Any
 
 import torch
 import zmq
+import zmq
 
 from nemo_rl.models.policy.utils import (
     IPCProtocol,
     calculate_aligned_size,
     rebuild_cuda_tensor_from_ipc,
 )
+from nemo_rl.models.policy.utils import (
+    IPCProtocol,
+    calculate_aligned_size,
+    rebuild_cuda_tensor_from_ipc,
+)
 from nemo_rl.utils.nsys import wrap_with_nvtx_name
+from nemo_rl.utils.packed_tensor import packed_broadcast_consumer
 from nemo_rl.utils.packed_tensor import packed_broadcast_consumer
 
 try:
@@ -61,6 +68,7 @@ class VllmInternalWorkerExtension:
         )
 
     def report_device_id(self) -> str:
+        """Retrieve the UUID of the current CUDA device."""
         """Retrieve the UUID of the current CUDA device."""
         from nemo_rl.utils.nvml import get_device_uuid
 

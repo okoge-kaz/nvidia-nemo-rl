@@ -14,8 +14,10 @@
 # limitations under the License.
 
 set -eou pipefail
+set -eou pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(realpath "$SCRIPT_DIR/..")"
 REPO_ROOT="$(realpath "$SCRIPT_DIR/..")"
 
 
@@ -38,11 +40,15 @@ echo "  Vllm Git URL: $GIT_URL"
 echo "  Vllm Git ref: $GIT_REF"
 echo "  Vllm Wheel commit: $VLLM_WHEEL_COMMIT"
 echo "  Vllm Wheel location: $VLLM_PRECOMPILED_WHEEL_LOCATION"
+echo "  Vllm Git ref: $GIT_REF"
+echo "  Vllm Wheel commit: $VLLM_WHEEL_COMMIT"
+echo "  Vllm Wheel location: $VLLM_PRECOMPILED_WHEEL_LOCATION"
 
 # Clone the repository
 echo "Cloning repository..."
 git clone "$GIT_URL" "$BUILD_DIR"
 cd "$BUILD_DIR"
+git checkout "$GIT_REF"
 git checkout "$GIT_REF"
 
 # Create a new Python environment using uv

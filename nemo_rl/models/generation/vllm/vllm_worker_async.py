@@ -178,7 +178,10 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
         engine_client = self.llm
         model_config = self.llm_async_engine_args.create_model_config()
         base_model_paths = [
-            BaseModelPath(name=model_config.model, model_path=model_config.model)
+            BaseModelPath(
+                name=model_config.served_model_name, model_path=model_config.model
+            ),
+            BaseModelPath(name=model_config.model, model_path=model_config.model),
         ]
 
         openai_serving_models = OpenAIServingModels(
@@ -216,7 +219,6 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
                 documents=None,
                 chat_template_kwargs=None,
                 tool_parser=None,
-                truncate_prompt_tokens=None,
                 add_special_tokens=False,
             ):
                 # Materialize the message tool calls so we can deepcopy below.
@@ -240,7 +242,6 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
                     documents,
                     chat_template_kwargs,
                     tool_parser,
-                    truncate_prompt_tokens,
                     add_special_tokens,
                 )
 
@@ -353,7 +354,7 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
 
             if isinstance(generator, ErrorResponse):
                 return JSONResponse(
-                    content=generator.model_dump(), status_code=generator.code
+                    content=generator.model_dump(), status_code=generator.error.code
                 )
 
             elif isinstance(generator, ChatCompletionResponse):
@@ -431,7 +432,7 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
 
             if isinstance(generator, ErrorResponse):
                 return JSONResponse(
-                    content=generator.model_dump(), status_code=generator.code
+                    content=generator.model_dump(), status_code=generator.error.code
                 )
             elif isinstance(generator, TokenizeResponse):
                 return JSONResponse(content=generator.model_dump())
@@ -454,6 +455,8 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
 
     def _setup_vllm_server(self) -> "tuple[threading.Thread, str, uvicorn.Server]":
         import threading
+        from logging import Filter as LoggingFilter
+        from logging import LogRecord, getLogger
 
         import uvicorn
         from fastapi import FastAPI
@@ -480,6 +483,18 @@ class VllmAsyncGenerationWorker(BaseVllmGenerationWorker):
             port=free_port,
         )
         server = uvicorn.Server(config=config)
+
+        print(
+            "Adding a uvicorn logging filter so that the logs aren't spammed with 200 OK messages. This is to help errors pop up better and filter out noise."
+        )
+
+        class No200Filter(LoggingFilter):
+            def filter(self, record: LogRecord) -> bool:
+                msg = record.getMessage()
+                return not msg.strip().endswith("200")
+
+        uvicorn_logger = getLogger("uvicorn.access")
+        uvicorn_logger.addFilter(No200Filter())
 
         thread = threading.Thread(target=server.run, daemon=True)
         thread.start()

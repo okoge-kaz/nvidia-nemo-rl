@@ -25,11 +25,29 @@ grpo:
     source_max: 1.0
     target_min: 0.0
     target_max: 1.0
+  use_dynamic_sampling: false
+  batch_multiplier: 1
+  reward_shaping:
+    enabled: false
+    overlong_buffer_length: 512
+    overlong_buffer_penalty: 1
+    max_response_length: ${policy.max_total_sequence_length}
+  reward_scaling:
+    enabled: false
+    source_min: 0.0
+    source_max: 1.0
+    target_min: 0.0
+    target_max: 1.0
   async_grpo:
     enabled: false
     max_trajectory_age_steps: 1
 loss_fn:
   reference_policy_kl_penalty: 0.01
+  # Can be set to k1, k2, k3
+  # For more details, see http://joschu.net/blog/kl-approx.html
+  reference_policy_kl_type: "k3"
+  kl_input_clamp_value: 20.0
+  kl_output_clamp_value: 10.0
   ratio_clip_min: 0.2
   ratio_clip_max: 0.2
   ratio_clip_c: null
@@ -55,6 +73,7 @@ policy:
   logprob_batch_size: 4
   max_total_sequence_length: 2048
   precision: bfloat16
+  offload_optimizer_for_logprob: false # Only useful for non-colocated generation since colocated generation will always offload optimizer to cuda before refit
   dtensor_cfg:
     _v2: true
     enabled: false
@@ -107,6 +126,8 @@ policy:
       max_model_len: ${policy.max_total_sequence_length}
       enforce_eager: false
       enable_expert_parallel: false
+      # VLMs require tokenizer to be initialized before generation, so we set skip_tokenizer_init to False.
+      skip_tokenizer_init: False
     colocated:
       enabled: true
       resources:
@@ -114,7 +135,7 @@ policy:
         num_nodes: null
   megatron_cfg:
     enabled: true
-    empty_unused_memory_level: 0
+    empty_unused_memory_level: 1  # 1 is the minimum recommendation for RL since we almost always need to offload before beginning generation. Setting to 0 is faster, but you are more likely to run out of GPU memory.
     activation_checkpointing: false
     converter_type: Qwen2ForCausalLM
     tensor_model_parallel_size: 1
@@ -150,6 +171,9 @@ policy:
       optimizer_cpu_offload: false
       optimizer_offload_fraction: 0.0
       clip_grad: ${policy.max_grad_norm}
+      # optimizer cpu offload
+      optimizer_cpu_offload: false
+      optimizer_offload_fraction: 0.0
     scheduler:
       start_weight_decay: ${policy.megatron_cfg.optimizer.weight_decay}
       end_weight_decay: ${policy.megatron_cfg.optimizer.weight_decay}

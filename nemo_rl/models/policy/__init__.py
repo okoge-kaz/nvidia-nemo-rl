@@ -119,6 +119,12 @@ class MegatronConfig(TypedDict):
     # If True, defer the casting of logits to float32 until the backward pass.
     # If you are using logprob_chunk_size, you must set this to True.
     defer_fp32_logits: NotRequired[bool]
+    # gives ~20% training perf speedup with sequence packing
+    apply_rope_fusion: bool
+    # gives ~25% training perf speedup with sequence packing and apply_rope_fusion
+    bias_activation_fusion: bool
+    # Force overwrite of the initial checkpoint even if it exists (default: False)
+    force_overwrite_initial_ckpt: NotRequired[bool]
 
     optimizer: MegatronOptimizerConfig
     scheduler: MegatronSchedulerConfig

@@ -41,7 +41,12 @@ wandb/
 checkpoints/
 results/
 code_snapshots*/
+.cache/
 
 # Runtime env
 *runtime_env.yaml
 !default_runtime_env.yaml
+
+# ABCI environment
+outputs/
+hostfile/

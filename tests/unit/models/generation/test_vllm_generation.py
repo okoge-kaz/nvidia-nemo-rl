@@ -94,6 +94,7 @@ basic_dtensor_test_config: PolicyConfig = {
     "max_new_tokens": 16,
     "do_sample": False,
     "precision": "float32",
+    "offload_optimizer_for_logprob": False,
     "optimizer": {
         "name": "torch.optim.AdamW",
         "kwargs": {
@@ -148,6 +149,7 @@ def get_basic_megatron_test_config(
         "learning_rate": 5e-6,
         "logprob_batch_size": 2,
         "precision": precision,
+        "offload_optimizer_for_logprob": False,
         "dtensor_cfg": {
             "enabled": False,  # Disabled for Megatron tests
         },
@@ -177,6 +179,7 @@ def get_basic_megatron_test_config(
             "moe_router_bias_update_rate": 0.0,
             "moe_permute_fusion": False,
             "apply_rope_fusion": True,
+            "bias_activation_fusion": True,
             "train_iters": 100,  # Required for Megatron training
             "optimizer": {
                 "optimizer": "adam",
@@ -1110,6 +1113,7 @@ def test_vllm_http_server(cluster, tokenizer):
     assert len(base_urls) == cluster.num_gpus_per_node
 
     body = dict(
+        model=generation_config["model_name"],
         messages=[
             {"role": "user", "content": "count to 5"},
         ],
@@ -1158,6 +1162,7 @@ def test_vllm_http_server(cluster, tokenizer):
                 },
                 "finish_reason": "length",
                 "stop_reason": None,
+                "token_ids": None,
             }
         ],
         "service_tier": None,
@@ -1169,6 +1174,7 @@ def test_vllm_http_server(cluster, tokenizer):
             "prompt_tokens_details": None,
         },
         "prompt_logprobs": None,
+        "prompt_token_ids": None,
         "kv_transfer_params": None,
     }
 
