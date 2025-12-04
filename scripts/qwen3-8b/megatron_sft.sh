@@ -1,8 +1,8 @@
 #!/bin/sh
 #PBS -q rt_HF
 #PBS -N qwen3-8b-sft
-#PBS -l select=8
-#PBS -l walltime=72:00:00
+#PBS -l select=1
+#PBS -l walltime=1:00:00
 #PBS -j oe
 #PBS -m n
 #PBS -koed
@@ -110,6 +110,7 @@ export TORCH_EXTENSIONS_DIR="$CACHE_ROOT/torch_extensions"
 export NVTE_CACHE_PATH="$CACHE_ROOT/nvte_cache"
 export TRITON_CACHE_DIR="$CACHE_ROOT/triton_cache"
 export NVTE_FRAMEWORK_LOGGING=1
+export RAY_DEDUP_LOGS=1
 
 # Ray starting Head Node
 echo "Starting Ray Head on $HEAD_NODE..."
@@ -125,7 +126,6 @@ sleep 10  # waiting for head node launch
 echo "Starting Ray Workers via mpirun..."
 WORKER_CMD="
 if [ \"\$(hostname)\" != \"$HEAD_NODE\" ]; then
-  export PATH=$PATH;
   ray start --address=$HEAD_IP:$PORT --num-gpus=$NUM_GPU_PER_NODE --disable-usage-stats --block;
 else
   echo \"I am Head ($HEAD_NODE), skipping worker start.\";
@@ -134,10 +134,16 @@ fi
 mpirun -np ${#NODES[@]} \
   --map-by ppr:1:node \
   -x PATH \
+  -x LD_LIBRARY_PATH \
   -x NCCL_SOCKET_IFNAME \
   -x GLOO_SOCKET_IFNAME \
   -x NCCL_IB_HCA \
   -x NCCL_DEBUG \
+  -x TORCH_EXTENSIONS_DIR \
+  -x NVTE_CACHE_PATH \
+  -x TRITON_CACHE_DIR \
+  -x NVTE_FRAMEWORK_LOGGING \
+  -x RAY_DEDUP_LOGS \
   bash -c "$WORKER_CMD" &
 
 sleep 15  # waiting for worker nodes
