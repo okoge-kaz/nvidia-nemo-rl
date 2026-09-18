@@ -60,7 +60,11 @@ from nemo_rl.experience.interfaces import (
     Completion,
     PromptGroupRecord,
 )
-from nemo_rl.experience.metric_utils import calculate_single_metric, pct
+from nemo_rl.experience.metric_utils import (
+    calculate_single_metric,
+    pct,
+    resolve_rollout_category,
+)
 from nemo_rl.experience.rollout_recovery import (
     PromptGroupPhase,
     PromptGroupStatus,
@@ -2339,6 +2343,10 @@ class RolloutManager:
                 prompt_idx=int(recovery_group.prompt_id),
                 mask_sample=tuple(mask_sample),
                 loss_multiplier=float(input_sample.get("loss_multiplier", 1.0)),
+                rollout_category=resolve_rollout_category(
+                    extra_env_info=input_sample.get("extra_env_info"),
+                    task_name=input_sample.get("task_name"),
+                ),
             )
             from nemo_rl.experience.rollout_reassembler_actor import (
                 assert_metadata_only,
